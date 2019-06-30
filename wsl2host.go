@@ -43,6 +43,8 @@ func updateIP() error {
 	scanner := bufio.NewScanner(f)
 	lines := make([]string, 0, 50)
 
+	wslline := fmt.Sprintf("%s %s", ip, hostname)
+
 	for scanner.Scan() {
 		n++
 		line := scanner.Text()
@@ -51,7 +53,7 @@ func updateIP() error {
 				return nil
 			}
 			wslexisting = true
-			lines = append(lines, fmt.Sprintf("%s %s", ip, hostname))
+			lines = append(lines, wslline)
 		} else {
 			lines = append(lines, line)
 		}
@@ -61,7 +63,7 @@ func updateIP() error {
 	}
 
 	if !wslexisting {
-		lines = append(lines, fmt.Sprintf("\r\n%s %s\r\n", ip, hostname))
+		lines = append(lines, wslline)
 	}
 
 	_, err = f.WriteAt([]byte(strings.Join(lines, "\r\n")), 0)
