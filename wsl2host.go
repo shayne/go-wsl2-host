@@ -66,6 +66,8 @@ func updateIP() error {
 		lines = append(lines, wslline)
 	}
 
+	lines = append(lines, "\r\n\r\n")
+
 	_, err = f.WriteAt([]byte(strings.Join(lines, "\r\n")), 0)
 	if err != nil {
 		return err

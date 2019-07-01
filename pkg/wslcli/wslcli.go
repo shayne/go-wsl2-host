@@ -1,7 +1,9 @@
 package wslcli
 
 import (
+	"errors"
 	"os/exec"
+	"strings"
 )
 
 // Running returns bool, error whether or not WSL instance is running
@@ -21,5 +23,10 @@ func IP() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(out), nil
+	sout := string(out)
+	ips := strings.Split(sout, " ")
+	if len(ips) == 0 {
+		return "", errors.New("invalid output from hostname -I")
+	}
+	return ips[0], nil
 }
