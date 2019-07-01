@@ -1,5 +1,7 @@
 # go-wsl2-host
 
+> Take a look at https://github.com/shayne/wsl2-hacks for things like auto-starting services, running commands when the VM boots and making localhost ports accessible
+
 A workaround for accessing the WSL2 VM from the Windows host.
 
 This program installs as a service and runs under the local user account. It automatically updates your Windows hosts file with the WSL2 VM's IP address.
