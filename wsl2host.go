@@ -9,7 +9,8 @@ import (
 	"github.com/shayne/go-wsl2-host/pkg/wslcli"
 )
 
-const hostname = "wsl.local"
+const wslHostname = "wsl.local"
+const windowsHostname = "windows.local"
 
 func isRunning() (bool, error) {
 	running, err := wslcli.Running()
@@ -19,8 +20,8 @@ func isRunning() (bool, error) {
 	return running, nil
 }
 
-func getIP() (string, error) {
-	ip, err := wslcli.IP()
+func getWslIP() (string, error) {
+	ip, err := wslcli.GetWslIP()
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +29,11 @@ func getIP() (string, error) {
 }
 
 func updateIP() error {
-	ip, err := getIP()
+	wslIP, err := getWslIP()
+	if err != nil {
+		return err
+	}
+	hostIP, err := wslcli.GetHostIP()
 	if err != nil {
 		return err
 	}
@@ -38,22 +43,34 @@ func updateIP() error {
 	}
 	defer f.Close()
 
-	n := 0
-	wslexisting := false
+	wslExisted := false
+	wslWasCorrect := false
+	hostExisted := false
+	hostWasCorrect := false
 	scanner := bufio.NewScanner(f)
 	lines := make([]string, 0, 50)
 
-	wslline := fmt.Sprintf("%s %s", ip, hostname)
+	wslLine := fmt.Sprintf("%s %s", wslIP, wslHostname)
+	hostLine := fmt.Sprintf("%s %s", hostIP, windowsHostname)
 
 	for scanner.Scan() {
-		n++
 		line := scanner.Text()
-		if strings.HasSuffix(line, hostname) {
-			if strings.Contains(line, ip) {
-				return nil
+		if strings.HasSuffix(line, wslHostname) {
+			if strings.Contains(line, wslIP) {
+				wslWasCorrect = true
+				lines = append(lines, line)
+			} else {
+				wslExisted = true
+				lines = append(lines, wslLine)
 			}
-			wslexisting = true
-			lines = append(lines, wslline)
+		} else if strings.HasSuffix(line, windowsHostname) {
+			if strings.Contains(line, hostIP) {
+				hostWasCorrect = true
+				lines = append(lines, line)
+			} else {
+				hostExisted = true
+				lines = append(lines, hostLine)
+			}
 		} else {
 			lines = append(lines, line)
 		}
@@ -62,11 +79,12 @@ func updateIP() error {
 		return err
 	}
 
-	if !wslexisting {
-		lines = append(lines, wslline)
+	if !wslWasCorrect && !wslExisted {
+		lines = append(lines, wslLine)
 	}
-
-	lines = append(lines, "\r\n\r\n")
+	if !hostWasCorrect && !hostExisted {
+		lines = append(lines, hostLine)
+	}
 
 	_, err = f.WriteAt([]byte(strings.Join(lines, "\r\n")), 0)
 	if err != nil {
