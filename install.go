@@ -58,7 +58,9 @@ func installService(name, desc string) error {
 	fmt.Printf("Windows Username: ")
 	var username string
 	fmt.Scanln(&username)
-	username = fmt.Sprintf(".\\%s", strings.TrimSpace(username))
+	if !strings.Contains(username, "\\") && !strings.Contains(username, "@") {
+		username = fmt.Sprintf(".\\%s", strings.TrimSpace(username))
+	}
 	fmt.Printf("Windows Password: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
