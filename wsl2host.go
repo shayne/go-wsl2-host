@@ -20,8 +20,8 @@ func isRunning() (bool, error) {
 	return running, nil
 }
 
-func getWslIP() (string, error) {
-	ip, err := wslcli.GetWslIP()
+func getWSLIP() (string, error) {
+	ip, err := wslcli.GetWSLIP()
 	if err != nil {
 		return "", err
 	}
@@ -29,7 +29,7 @@ func getWslIP() (string, error) {
 }
 
 func updateIP() error {
-	wslIP, err := getWslIP()
+	wslIP, err := getWSLIP()
 	if err != nil {
 		return err
 	}

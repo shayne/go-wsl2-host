@@ -17,8 +17,8 @@ func Running() (bool, error) {
 	return len(out) != 0, nil
 }
 
-// GetWslIP returns the IP address of the running default WSL distro
-func GetWslIP() (string, error) {
+// GetWSLIP returns the IP address of the running default WSL distro
+func GetWSLIP() (string, error) {
 	cmd := exec.Command("wsl.exe", "--", "hostname", "-I")
 	out, err := cmd.Output()
 	if err != nil {
