@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"bufio"
@@ -12,7 +12,8 @@ import (
 const wslHostname = "wsl.local"
 const windowsHostname = "windows.local"
 
-func isRunning() (bool, error) {
+// IsRunning returns whether or not WSL is running
+func IsRunning() (bool, error) {
 	running, err := wslcli.Running()
 	if err != nil {
 		return false, err
@@ -28,7 +29,8 @@ func getWSLIP() (string, error) {
 	return strings.TrimSpace(ip), nil
 }
 
-func updateIP() error {
+// UpdateIP updates the Windows hosts file
+func UpdateIP() error {
 	wslIP, err := getWSLIP()
 	if err != nil {
 		return err

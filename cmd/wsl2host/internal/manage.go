@@ -1,6 +1,6 @@
 // +build windows
 
-package main
+package internal
 
 import (
 	"fmt"
@@ -10,7 +10,8 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
-func startService(name string) error {
+// StartService starts a Windows service given a name
+func StartService(name string) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -28,7 +29,8 @@ func startService(name string) error {
 	return nil
 }
 
-func controlService(name string, c svc.Cmd, to svc.State) error {
+// ControlService used to stop/pause or continue Windows service
+func ControlService(name string, c svc.Cmd, to svc.State) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err

@@ -1,6 +1,6 @@
 // +build windows
 
-package main
+package internal
 
 import (
 	"fmt"
@@ -40,7 +40,8 @@ func exePath() (string, error) {
 	return "", err
 }
 
-func installService(name, desc string) error {
+// InstallService installs the Windows service and starts it
+func InstallService(name, desc string) error {
 	exepath, err := exePath()
 	if err != nil {
 		return err
@@ -77,11 +78,12 @@ func installService(name, desc string) error {
 		s.Delete()
 		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
 	}
-	startService(name)
+	StartService(name)
 	return nil
 }
 
-func removeService(name string) error {
+// RemoveService uninstalls the Windows service
+func RemoveService(name string) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err

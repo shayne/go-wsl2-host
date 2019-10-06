@@ -4,13 +4,14 @@
 
 // +build windows
 
-package main
+package internal
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/shayne/go-wsl2-host/cmd/wsl2host/pkg/service"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -18,9 +19,9 @@ import (
 
 var elog debug.Log
 
-type wsl2hostservice struct{}
+type windowserver struct{}
 
-func (m *wsl2hostservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
+func (m *windowserver) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
 	tick := time.Tick(5 * time.Second)
@@ -29,11 +30,11 @@ loop:
 	for {
 		select {
 		case <-tick:
-			is, err := isRunning()
+			is, err := service.IsRunning()
 			if err != nil {
 				elog.Error(1, fmt.Sprintf("%v", err))
 			} else if is {
-				err := updateIP()
+				err := service.UpdateIP()
 				if err != nil {
 					elog.Error(1, fmt.Sprintf("%v", err))
 				}
@@ -64,7 +65,8 @@ loop:
 	return
 }
 
-func runService(name string, isDebug bool) {
+// RunService runs the service logic
+func RunService(name string, isDebug bool) {
 	var err error
 	if isDebug {
 		elog = debug.New(name)
@@ -81,7 +83,7 @@ func runService(name string, isDebug bool) {
 	if isDebug {
 		run = debug.Run
 	}
-	err = run(name, &wsl2hostservice{})
+	err = run(name, &windowserver{})
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
 		return

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/shayne/go-wsl2-host/cmd/wsl2host/internal"
 	"golang.org/x/sys/windows/svc"
 )
 
@@ -27,7 +28,7 @@ func main() {
 		log.Fatalf("failed to determine if we are running in an interactive session: %v", err)
 	}
 	if !isIntSess {
-		runService(svcName, false)
+		internal.RunService(svcName, false)
 		return
 	}
 
@@ -38,20 +39,20 @@ func main() {
 	cmd := strings.ToLower(os.Args[1])
 	switch cmd {
 	case "debug":
-		runService(svcName, true)
+		internal.RunService(svcName, true)
 		return
 	case "install":
-		err = installService(svcName, "WSL2 Host")
+		err = internal.InstallService(svcName, "WSL2 Host")
 	case "remove":
-		err = removeService(svcName)
+		err = internal.RemoveService(svcName)
 	case "start":
-		err = startService(svcName)
+		err = internal.StartService(svcName)
 	case "stop":
-		err = controlService(svcName, svc.Stop, svc.Stopped)
+		err = internal.ControlService(svcName, svc.Stop, svc.Stopped)
 	case "pause":
-		err = controlService(svcName, svc.Pause, svc.Paused)
+		err = internal.ControlService(svcName, svc.Pause, svc.Paused)
 	case "continue":
-		err = controlService(svcName, svc.Continue, svc.Running)
+		err = internal.ControlService(svcName, svc.Continue, svc.Running)
 	default:
 		usage(fmt.Sprintf("invalid command %s", cmd))
 	}
