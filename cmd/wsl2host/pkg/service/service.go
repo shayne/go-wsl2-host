@@ -34,12 +34,16 @@ func Run() error {
 		return fmt.Errorf("failed to create hosts api: %w", err)
 	}
 
+	updated := false
 	hostentries := hapi.Entries()
 	for _, i := range infos {
 		hostname := distroNameToHostname(i.Name)
 		// remove stopped distros
 		if i.Running == false {
-			hapi.RemoveEntry(hostname)
+			err := hapi.RemoveEntry(hostname)
+			if err == nil {
+				updated = true
+			}
 			continue
 		}
 
@@ -49,8 +53,12 @@ func Run() error {
 			if err != nil {
 				return fmt.Errorf("failed to get IP for distro %q: %w", i.Name, err)
 			}
-			he.IP = ip
+			if he.IP != ip {
+				updated = true
+				he.IP = ip
+			}
 		} else {
+			updated = true
 			// add running distros not present
 			hapi.AddEntry(&hostsapi.HostEntry{
 				Hostname: hostname,
@@ -59,9 +67,11 @@ func Run() error {
 		}
 	}
 
-	err = hapi.Write()
-	if err != nil {
-		return fmt.Errorf("failed to write hosts file: %w", err)
+	if updated {
+		err = hapi.Write()
+		if err != nil {
+			return fmt.Errorf("failed to write hosts file: %w", err)
+		}
 	}
 
 	return nil

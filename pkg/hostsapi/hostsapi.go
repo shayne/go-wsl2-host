@@ -13,7 +13,7 @@ const hostspath = "C:/Windows/System32/drivers/etc/hosts"
 
 // HostEntry data structure for IP and hostnames
 type HostEntry struct {
-	Idx      int
+	idx      int
 	IP       string
 	Hostname string
 }
@@ -51,7 +51,7 @@ func parseHostfileLine(idx int, line string) ([]*HostEntry, error) {
 	var entries []*HostEntry
 	for _, hostname := range validfields[1:] {
 		entries = append(entries, &HostEntry{
-			Idx:      idx,
+			idx:      idx,
 			IP:       validfields[0],
 			Hostname: hostname,
 		})
@@ -74,7 +74,7 @@ func (h *HostsAPI) loadAndParse() error {
 		for _, e := range entries {
 			if h.filter == "" || strings.Contains(e.Hostname, h.filter) {
 				h.entries[e.Hostname] = e
-				h.remidxs[e.Idx] = nil
+				h.remidxs[e.idx] = nil
 			}
 		}
 	}
