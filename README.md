@@ -1,12 +1,12 @@
 # go-wsl2-host
 
-> Take a look at https://github.com/shayne/wsl2-hacks for things like auto-starting services, running commands when the VM boots and making localhost ports accessible
+> v0.2.0 is out, this drops support for `windows.local`, if this was important let me know and I can add it back in.
 
-A workaround for accessing the WSL2 VM from the Windows host and vice versa.
+A workaround for accessing the WSL2 VM from the Windows host.
 
 This program installs as a service and runs under the local user account. It automatically updates your Windows hosts file with the WSL2 VM's IP address.
 
-The program uses the hostname `wsl.local` for the WSL VM and `windows.local` for the Windows host.
+The program uses the name of your distro, modified to be a hostname. For example "Ubuntu-18.04" becomes `ubuntu1804.wsl`. If you have more than one running distro, it will be added as well. When the distro stops it is removed from the host file.
 
 I wrote this for my own use but thought it might be useful for others. It's not perfect but gets the job done for me.
 
@@ -15,11 +15,11 @@ To install and run, download a binary from the releases tab. Place it somewhere 
 Open an **elevated/administrator** command prompt:
 
 ```
-> .\go-wsl2-host.exe install
+> .\wsl2host.exe install
 Windows Username: <username-you-use-to-login-to-windows>
 Windows Password: <password-for-this-user>
 ```
 
-The program will install a service and start it up. Launch `wsl` then from a `cmd` prompt, run `ping wsl.local`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
+The program will install a service and start it up. Launch `wsl` then from a `cmd` prompt, run `ping ubuntu1804.wsl`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
 
 The Windows hosts file is located at: `C:\Windows\System32\drivers\etc\hosts`

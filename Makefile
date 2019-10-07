@@ -1,4 +1,4 @@
 build:
-	go build -o go-wsl-host.exe ./cmd/wsl2host
+	go build -o wsl2host.exe ./cmd/wsl2host
 
 .PHONY: build

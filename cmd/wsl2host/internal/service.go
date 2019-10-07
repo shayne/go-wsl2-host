@@ -30,14 +30,9 @@ loop:
 	for {
 		select {
 		case <-tick:
-			is, err := service.IsRunning()
+			err := service.Run()
 			if err != nil {
 				elog.Error(1, fmt.Sprintf("%v", err))
-			} else if is {
-				err := service.UpdateIP()
-				if err != nil {
-					elog.Error(1, fmt.Sprintf("%v", err))
-				}
 			}
 		case c := <-r:
 			switch c.Cmd {
