@@ -84,6 +84,7 @@ func InstallService(name, desc string) error {
 
 // RemoveService uninstalls the Windows service
 func RemoveService(name string) error {
+	var err2 error
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -91,16 +92,20 @@ func RemoveService(name string) error {
 	defer m.Disconnect()
 	s, err := m.OpenService(name)
 	if err != nil {
-		return fmt.Errorf("service %s is not installed", name)
-	}
-	defer s.Close()
-	err = s.Delete()
-	if err != nil {
-		return err
+		err2 = fmt.Errorf("service %s is not installed", name)
+	} else {
+		defer s.Close()
+		err = s.Delete()
+		if err != nil {
+			err2 = fmt.Errorf("%w; %s", err2, err.Error())
+		}
 	}
 	err = eventlog.Remove(name)
 	if err != nil {
-		return fmt.Errorf("RemoveEventLogSource() failed: %s", err)
+		err2 = fmt.Errorf("%w; RemoveEventLogSource() failed: %s", err2, err)
+	}
+	if err2 != nil {
+		return err2
 	}
 	return nil
 }

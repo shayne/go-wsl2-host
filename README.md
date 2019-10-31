@@ -23,3 +23,13 @@ Windows Password: <password-for-this-user>
 The program will install a service and start it up. Launch `wsl` then from a `cmd` prompt, run `ping ubuntu1804.wsl`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
 
 The Windows hosts file is located at: `C:\Windows\System32\drivers\etc\hosts`
+
+**To remove / uninstall the service:**
+
+_NOTE: Upgrading Windows Insider will remove the service, but not cleanly. To reinstall after upgrading, first make sure you've downloaded the latest version of `wsl2host`, then run `remove` before `install`_
+
+Open an **elevated/administrator** command prompt:
+
+```
+> .\wsl2host.exe remove
+```
