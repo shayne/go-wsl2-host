@@ -33,3 +33,13 @@ Open an **elevated/administrator** command prompt:
 ```
 > .\wsl2host.exe remove
 ```
+
+**Specifying aliases**
+
+As of v0.3 you can no specify aliases that point to your WSL2 VM IP. Having `some.client.local`, may be useful in your development workflow.
+
+To do this, create the file `~/.wsl2hosts` in your default WSL2 distro. Host names are space separated:
+```
+some.client.local my-app.local wsl.local
+```
+
