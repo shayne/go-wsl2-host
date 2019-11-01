@@ -16,6 +16,7 @@ type HostEntry struct {
 	idx      int
 	IP       string
 	Hostname string
+	Comment  string
 }
 
 // HostsAPI data structure
@@ -35,25 +36,37 @@ func parseHostfileLine(idx int, line string) ([]*HostEntry, error) {
 		return nil, errors.New("comment line")
 	}
 	fields := strings.Fields(line)
-	var validfields []string
-	for _, f := range fields {
-		if len(f) <= 0 {
+	var ip string
+	var hostnames []string
+	var comment string
+	var commentidx int
+	for i, f := range fields {
+		if f == "" {
 			continue
 		}
 		if f[0] == '#' { // inline comment
+			commentidx = i + 1
 			break // don't process any more
 		}
-		validfields = append(validfields, f)
+		if i == 0 {
+			ip = f
+		} else {
+			hostnames = append(hostnames, f)
+		}
 	}
-	if len(validfields) <= 1 {
+	if commentidx > 0 {
+		comment = strings.Join(fields[commentidx:], " ")
+	}
+	if ip == "" || len(hostnames) == 0 {
 		return nil, fmt.Errorf("invalid fields for line: %q", line)
 	}
 	var entries []*HostEntry
-	for _, hostname := range validfields[1:] {
+	for _, hostname := range hostnames {
 		entries = append(entries, &HostEntry{
 			idx:      idx,
-			IP:       validfields[0],
+			IP:       ip,
 			Hostname: hostname,
+			Comment:  comment,
 		})
 	}
 
@@ -72,7 +85,7 @@ func (h *HostsAPI) loadAndParse() error {
 			continue
 		}
 		for _, e := range entries {
-			if h.filter == "" || strings.Contains(e.Hostname, h.filter) {
+			if h.filter == "" || strings.Contains(e.Comment, h.filter) {
 				h.entries[e.Hostname] = e
 				h.remidxs[e.idx] = nil
 			}
@@ -155,10 +168,13 @@ func (h *HostsAPI) Write() error {
 
 	// append entries to file
 	for _, e := range h.entries {
-		outbuf.WriteString(fmt.Sprintf("%s %s    # managed by wsl2-host\r\n", e.IP, e.Hostname))
+		var comment string
+		if e.Comment != "" {
+			comment = fmt.Sprintf("    # %s", e.Comment)
+		}
+		outbuf.WriteString(fmt.Sprintf("%s %s%s\r\n", e.IP, e.Hostname, comment))
 	}
 
-	fmt.Println(string(outbuf.Bytes()))
 	f, err := os.OpenFile(hostspath, os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to open hosts file for writing: %w", err)

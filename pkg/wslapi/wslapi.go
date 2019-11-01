@@ -62,6 +62,20 @@ func GetAllInfo() ([]*DistroInfo, error) {
 	return infos, nil
 }
 
+// GetDefaultDistro returns the info for the default distro
+func GetDefaultDistro() (*DistroInfo, error) {
+	infos, err := GetAllInfo()
+	if err != nil {
+		return nil, fmt.Errorf("GetAllInfo failed: %w", err)
+	}
+	for _, i := range infos {
+		if i.Default == true {
+			return i, nil
+		}
+	}
+	return nil, errors.New("failed to find default")
+}
+
 // IsRunning returns whether or not a given WSL distro is running
 func IsRunning(name string) (bool, error) {
 	running, err := wslcli.RunningDistros()
@@ -86,4 +100,25 @@ func GetIP(name string) (string, error) {
 		return wslcli.GetIP(name)
 	}
 	return "", fmt.Errorf("GetIP failed, distro '%s' is not running", name)
+}
+
+// GetHostAliases returns custom hosts referenced in `~/.wsl2hosts`
+// of default WSL distro
+func GetHostAliases() ([]string, error) {
+	info, err := GetDefaultDistro()
+	if err != nil {
+		return nil, fmt.Errorf("GetDefaultDistro failed: %w", err)
+	}
+	if !info.Running {
+		return nil, errors.New("default distro not running")
+	}
+	out, err := wslcli.RunCommand("cat", "~/.wsl2hosts")
+	if err != nil {
+		return nil, fmt.Errorf("RunCommand failed: %w", err)
+	}
+	out = strings.TrimSpace(out)
+	if out == "" {
+		return nil, fmt.Errorf("no host aliases")
+	}
+	return strings.Split(out, " "), nil
 }

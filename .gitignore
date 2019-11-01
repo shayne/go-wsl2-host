@@ -1,1 +1,5 @@
 *.exe
+vendor/
+example/
+foo.go
+foo_test.go

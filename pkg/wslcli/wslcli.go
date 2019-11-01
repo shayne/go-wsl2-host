@@ -59,6 +59,19 @@ func GetIP(name string) (string, error) {
 	return ips[0], nil
 }
 
+// RunCommand runs the given command via `bash -c` under
+// the default WSL distro
+func RunCommand(command string, args ...string) (string, error) {
+	cmdstr := fmt.Sprintf("%s %s", command, strings.Join(args, " "))
+	cmd := exec.Command("wsl.exe", "--", "bash", "-c", cmdstr)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	sout := string(out)
+	return sout, nil
+}
+
 // GetHostIP returns the IP address of Hyper-V Switch on the host connected to WSL
 func GetHostIP() (string, error) {
 	cmd := exec.Command("netsh", "interface", "ip", "show", "address", "vEthernet (WSL)") //, "|", "findstr", "IP Address", "|", "%", "{", "$_", "-replace", "IP Address:", "", "}", "|", "%", "{", "$_", "-replace", " ", "", "}")
