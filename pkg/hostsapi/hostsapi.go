@@ -182,6 +182,10 @@ func (h *HostsAPI) Write() error {
 	defer f.Close()
 
 	f.Write(outbuf.Bytes())
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

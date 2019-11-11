@@ -1,5 +1,6 @@
 *.exe
+.vscode/
 vendor/
-example/
+examples/
 foo.go
 foo_test.go
