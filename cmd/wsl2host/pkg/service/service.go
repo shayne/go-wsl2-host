@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/shayne/go-wsl2-host/internal/wsl2hosts"
+	"golang.org/x/sys/windows/svc/debug"
 
 	"github.com/shayne/go-wsl2-host/pkg/hostsapi"
 
@@ -25,14 +26,16 @@ func distroNameToHostname(distroname string) string {
 }
 
 // Run main entry point to service logic
-func Run() error {
+func Run(elog debug.Log) error {
 	infos, err := wslapi.GetAllInfo()
 	if err != nil {
+		elog.Error(1, fmt.Sprintf("failed to get infos: %v", err))
 		return fmt.Errorf("failed to get infos: %w", err)
 	}
 
 	hapi, err := hostsapi.CreateAPI("wsl2-host") // filtere only managed host entries
 	if err != nil {
+		elog.Error(1, fmt.Sprintf("failed to create hosts api: %v", err))
 		return fmt.Errorf("failed to create hosts api: %w", err)
 	}
 
@@ -52,10 +55,11 @@ func Run() error {
 
 		// update IPs of running distros
 		ip, err := wslapi.GetIP(i.Name)
+		if err != nil {
+			elog.Info(1, fmt.Sprintf("failed to get IP for distro %q: %v", i.Name, err))
+			continue
+		}
 		if he, exists := hostentries[hostname]; exists {
-			if err != nil {
-				return fmt.Errorf("failed to get IP for distro %q: %w", i.Name, err)
-			}
 			if he.IP != ip {
 				updated = true
 				he.IP = ip
@@ -76,6 +80,7 @@ func Run() error {
 	// process aliases
 	defdistro, _ := wslapi.GetDefaultDistro()
 	if err != nil {
+		elog.Error(1, fmt.Sprintf("GetDefaultDistro failed: %v", err))
 		return fmt.Errorf("GetDefaultDistro failed: %w", err)
 	}
 	var aliasmap = make(map[string]interface{})
@@ -125,6 +130,7 @@ func Run() error {
 	if updated {
 		err = hapi.Write()
 		if err != nil {
+			elog.Error(1, fmt.Sprintf("failed to write hosts file: %v", err))
 			return fmt.Errorf("failed to write hosts file: %w", err)
 		}
 	}

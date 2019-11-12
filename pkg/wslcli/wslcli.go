@@ -51,8 +51,9 @@ func GetIP(name string) (string, error) {
 		return "", err
 	}
 	sout := string(out)
+	sout = strings.TrimSpace(sout)
 	ips := strings.Split(sout, " ")
-	if len(ips) == 0 {
+	if sout == "" || len(ips) == 0 {
 		return "", errors.New("invalid output from hostname -I")
 	}
 	// first IP is the correct interface

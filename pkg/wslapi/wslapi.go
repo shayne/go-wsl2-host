@@ -96,10 +96,10 @@ func GetIP(name string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("IsRunning failed: %w", err)
 	}
-	if running {
-		return wslcli.GetIP(name)
+	if !running {
+		return "", fmt.Errorf("GetIP failed, distro '%s' is not running", name)
 	}
-	return "", fmt.Errorf("GetIP failed, distro '%s' is not running", name)
+	return wslcli.GetIP(name)
 }
 
 // GetHostAliases returns custom hosts referenced in `~/.wsl2hosts`

@@ -30,7 +30,7 @@ loop:
 	for {
 		select {
 		case <-tick:
-			err := service.Run()
+			err := service.Run(elog)
 			if err != nil {
 				elog.Error(1, fmt.Sprintf("%v", err))
 			}
