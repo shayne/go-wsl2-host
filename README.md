@@ -40,8 +40,22 @@ Open an **elevated/administrator** command prompt:
 
 As of v0.3 you can no specify aliases that point to your WSL2 VM IP. Having `some.client.local`, may be useful in your development workflow.
 
-To do this, create the file `~/.wsl2hosts` in your default WSL2 distro. Host names are space separated:
+To do this, download the script `.wsl2hosts` of this project in your default WSL2 distro, put it in `~/.wsl2hosts` and set it executable. Modify the script at line 25 to your own alias.
+
+Host names are space separated:
+
 ```
-some.client.local my-app.local wsl.local
+echo "some.client.local my-app.local wsl.local"
 ```
 
+**Specifying custom command to get IP**
+
+Default method of getting VM's IP address is to run `hostname -I` command. If command `hostname -I` is not available in some cases, you can change the command to your own.
+
+To do this, download the script `.wsl2hosts` of this project in your default WSL2 distro, put it in `~/.wsl2hosts` and set it executable. Modify the script at line 13 to your own command.
+
+For example:
+
+```
+echo $(ip addr show eth0 | grep 'inet\s' | awk '{print $2}' | awk -F '/' '{print $1}')
+```
