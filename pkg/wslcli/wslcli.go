@@ -45,19 +45,49 @@ func ListAll() (string, error) {
 // Suggest check if running before calling this function as
 // it has the side-effect of starting the distro
 func GetIP(name string) (string, error) {
-	cmd := exec.Command("wsl.exe", "-d", name, "--", "hostname", "-I")
+	// check if ~/.wsl2hosts is exist
+	cmd := exec.Command("wsl.exe", "-d", name, "--", "eval", "ls -a ~ | grep .wsl2hosts")
 	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
 	sout := string(out)
 	sout = strings.TrimSpace(sout)
-	ips := strings.Split(sout, " ")
-	if sout == "" || len(ips) == 0 {
-		return "", errors.New("invalid output from hostname -I")
+	if err == nil && sout == ".wsl2hosts" {
+		// run ~/.wsl2hosts as a bash script
+		// output data format:
+		// first line is VM's ip: xxx.xxx.xxx.xxx
+		// second line is host alias or empty: arch.wsl
+		cmd := exec.Command("wsl.exe", "-d", name, "--", "sh", "~/.wsl2hosts")
+		out, err := cmd.Output()
+		if err != nil {
+			return "", fmt.Errorf("RunCommand failed: %w", err)
+		}
+		sout := string(out)
+		sout = strings.TrimSpace(sout)
+		lines := strings.Split(sout, "\n")
+		if sout == "" || len(lines) == 0 {
+			return "", errors.New("invalid output from .wsl2hosts")
+		}
+		line := lines[0]
+		line = strings.TrimSpace(line)
+		ips := strings.Split(line, " ")
+		if line == "" || len(ips) == 0 {
+			return "", errors.New("invalid output from .wsl2hosts")
+		}
+		return ips[0], nil
+	} else {
+		cmd := exec.Command("wsl.exe", "-d", name, "--", "hostname", "-I")
+		out, err := cmd.Output()
+		if err != nil {
+			return "", err
+		}
+		sout := string(out)
+		sout = strings.TrimSpace(sout)
+		ips := strings.Split(sout, " ")
+		if sout == "" || len(ips) == 0 {
+			return "", errors.New("invalid output from hostname -I")
+		}
+		// first IP is the correct interface
+		return ips[0], nil
 	}
-	// first IP is the correct interface
-	return ips[0], nil
 }
 
 // RunCommand runs the given command via `bash -c` under

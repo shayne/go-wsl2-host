@@ -3,6 +3,7 @@ package wslapi
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -112,13 +113,35 @@ func GetHostAliases() ([]string, error) {
 	if !info.Running {
 		return nil, errors.New("default distro not running")
 	}
-	out, err := wslcli.RunCommand("cat", "~/.wsl2hosts")
-	if err != nil {
+	// check if ~/.wsl2hosts is exist
+	cmd := exec.Command("wsl.exe", "--", "eval", "ls -a ~ | grep .wsl2hosts")
+	out, err := cmd.Output()
+	sout := string(out)
+	sout = strings.TrimSpace(sout)
+	if err == nil && sout == ".wsl2hosts" {
+		// run ~/.wsl2hosts as a bash script
+		// output data format:
+		// first line is VM's ip: xxx.xxx.xxx.xxx
+		// second line is host alias or empty: arch.wsl
+		cmd := exec.Command("wsl.exe", "--", "sh", "~/.wsl2hosts")
+		out, err := cmd.Output()
+		if err != nil {
+			return nil, fmt.Errorf("RunCommand failed: %w", err)
+		}
+		sout := string(out)
+		sout = strings.TrimSpace(sout)
+		lines := strings.Split(sout, "\n")
+		if sout == "" || len(lines) == 0 {
+			return nil, errors.New("invalid output from .wsl2hosts")
+		}
+		if len(lines) == 1 {
+			return nil, fmt.Errorf("no host aliases")
+		}
+		line := lines[1]
+		line = strings.TrimSpace(line)
+		return strings.Split(line, " "), nil
+	} else if err != nil {
 		return nil, fmt.Errorf("RunCommand failed: %w", err)
 	}
-	out = strings.TrimSpace(out)
-	if out == "" {
-		return nil, fmt.Errorf("no host aliases")
-	}
-	return strings.Split(out, " "), nil
+	return nil, fmt.Errorf("no host aliases")
 }
