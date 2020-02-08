@@ -1,0 +1,25 @@
+#! /bin/sh
+
+# Put this script to `~/.wsl2hosts` and `chmod +x ~/.wsl2hosts`
+
+# This line will print your WSL2 VM's IP address.
+# Default:
+# echo $(hostname -I)
+
+# Command `hostname -I` is not available in some cases, you can change the command to your own.
+# For example:`
+# echo $(ip addr show eth0 | grep 'inet\s' | awk '{print $2}' | awk -F '/' '{print $1}')
+
+echo $(hostname -I)
+
+# ---------------------------------------------------------------------------------------------
+
+# This line will print your WSL2 VM's hostname and will be used in Windows's hosts file.
+# Default:
+# echo ""
+
+# By set to empty, hostname will be generated automatically, but you can set your own hostname.
+# For example:`
+# echo "wsl.vm wsl.local"
+
+echo ""
