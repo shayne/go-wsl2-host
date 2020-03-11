@@ -9,6 +9,8 @@ import (
 	"github.com/shayne/go-wsl2-host/pkg/wslcli"
 )
 
+const dockerDesktopDistros = "docker-desktop"
+
 // DistroInfo data structure for state of a WSL distro
 type DistroInfo struct {
 	Name    string
@@ -49,6 +51,9 @@ func GetAllInfo() ([]*DistroInfo, error) {
 			return nil, fmt.Errorf("invalid field length for distro: %q", line)
 		}
 		info.Name = fields[0]
+		if strings.HasPrefix(info.Name, dockerDesktopDistros) {
+			continue
+		}
 		info.Running = fields[1] == "Running"
 		version, err := strconv.ParseInt(fields[2], 10, 0)
 		if err != nil {
