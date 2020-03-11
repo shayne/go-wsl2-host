@@ -45,19 +45,28 @@ func ListAll() (string, error) {
 // Suggest check if running before calling this function as
 // it has the side-effect of starting the distro
 func GetIP(name string) (string, error) {
-	cmd := exec.Command("wsl.exe", "-d", name, "--", "hostname", "-I")
+	cmd := exec.Command("wsl.exe", "-d", name, "--", "cat", "/proc/net/fib_trie")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 	sout := string(out)
 	sout = strings.TrimSpace(sout)
-	ips := strings.Split(sout, " ")
-	if sout == "" || len(ips) == 0 {
-		return "", errors.New("invalid output from hostname -I")
+	if sout == "" {
+		return "", errors.New("invalid output from fib_trie")
 	}
-	// first IP is the correct interface
-	return ips[0], nil
+	lines := strings.Split(sout, "\n")
+	for i, line := range lines {
+		if strings.Index(line, "32 host LOCAL") != -1 {
+			if i > 0 && strings.Index(lines[i-1], "127.0.0.1") == -1 {
+				if fs := strings.Fields(lines[i-1]); len(fs) > 1 {
+					return strings.TrimSpace(fs[1]), nil
+				}
+				break
+			}
+		}
+	}
+	return "", errors.New("unable to find IP")
 }
 
 // RunCommand runs the given command via `bash -c` under
