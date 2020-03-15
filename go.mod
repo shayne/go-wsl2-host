@@ -1,6 +1,6 @@
 module github.com/shayne/go-wsl2-host
 
-go 1.12
+go 1.14
 
 require (
 	github.com/stretchr/testify v1.4.0
