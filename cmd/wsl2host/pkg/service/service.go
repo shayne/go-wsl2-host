@@ -54,10 +54,15 @@ func Run(elog debug.Log) error {
 		}
 
 		// update IPs of running distros
-		ip, err := wslapi.GetIP(i.Name)
-		if err != nil {
-			elog.Info(1, fmt.Sprintf("failed to get IP for distro %q: %v", i.Name, err))
-			continue
+		var ip string
+		if i.Version == 1 {
+			ip = "127.0.0.1"
+		} else {
+			ip, err = wslapi.GetIP(i.Name)
+			if err != nil {
+				elog.Info(1, fmt.Sprintf("failed to get IP for distro %q: %v", i.Name, err))
+				continue
+			}
 		}
 		if he, exists := hostentries[hostname]; exists {
 			if he.IP != ip {
