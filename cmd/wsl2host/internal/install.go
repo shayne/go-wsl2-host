@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
 )
@@ -53,7 +56,19 @@ func InstallService(name, desc string) error {
 		s.Close()
 		return fmt.Errorf("service %s already exists", name)
 	}
-	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc, StartType: mgr.StartAutomatic, ServiceStartName: "LocalSystem"}, "is", "auto-started")
+	fmt.Printf("Windows Username: ")
+	var username string
+	fmt.Scanln(&username)
+	if !strings.Contains(username, "\\") && !strings.Contains(username, "@") {
+		username = fmt.Sprintf(".\\%s", strings.TrimSpace(username))
+	}
+	fmt.Printf("Windows Password: ")
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return err
+	}
+	password := strings.TrimSpace(string(bytePassword))
+	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc, StartType: mgr.StartAutomatic, ServiceStartName: username, Password: password}, "is", "auto-started")
 	if err != nil {
 		return err
 	}
