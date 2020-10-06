@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"github.com/shayne/go-wsl2-host/pkg/hostsapi"
 
 	"github.com/shayne/go-wsl2-host/pkg/wslapi"
+
+	"github.com/shayne/go-wsl2-host/pkg/wslcli"
 )
 
 const tld = ".wsl"
@@ -129,6 +132,22 @@ func Run(elog debug.Log) error {
 			if err == nil {
 				updated = true
 			}
+		}
+	}
+
+	hostIP, err := wslcli.GetHostIP()
+
+	if err == nil {
+		hostname, err := os.Hostname()
+		hostAlias := distroNameToHostname(hostname)
+		err = hapi.AddEntry(&hostsapi.HostEntry{
+			IP:       hostIP,
+			Hostname: hostAlias,
+			Comment:  wsl2hosts.DistroComment(hostname),
+		})
+
+		if err == nil {
+			updated = true
 		}
 	}
 
