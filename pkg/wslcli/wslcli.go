@@ -190,12 +190,12 @@ func GetHostIP() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ipRegex := regexp.MustCompile("IP Address:\040*(.*)\r\n")
+	ipRegex := regexp.MustCompile("IP(.*):\040*(.*)\r\n")
 	ipString := ipRegex.FindStringSubmatch(string(out))
-	if len(ipString) != 2 {
+	if len(ipString) != 3 {
 		return "", errors.New(`netsh interface ip show address "vEthernet (WSL)"`)
 	}
-	return ipString[1], nil
+	return ipString[2], nil
 }
 
 func decodeOutput(raw []byte) (string, error) {
