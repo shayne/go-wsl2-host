@@ -17,6 +17,7 @@ type DistroInfo struct {
 	Running bool
 	Version int
 	Default bool
+	IP      string
 }
 
 // GetAllInfo checks all distros and returns slice
@@ -61,10 +62,23 @@ func GetAllInfo() ([]*DistroInfo, error) {
 		}
 		info.Version = int(version)
 
+		if info.Version == 1 {
+			info.IP = "127.0.0.1"
+		} else if info.Running {
+			info.IP, err = GetIP(info.Name)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get IP for distro %q: %v", info.Name, err)
+			}
+		}
+
 		infos = append(infos, info)
 	}
 
 	return infos, nil
+}
+
+func Shutdown() error {
+	return wslcli.Shutdown()
 }
 
 // GetDefaultDistro returns the info for the default distro
@@ -126,4 +140,36 @@ func GetHostAliases() ([]string, error) {
 		return nil, fmt.Errorf("no host aliases")
 	}
 	return strings.Split(out, " "), nil
+}
+
+func GetHostIP(distro string, host string) (string, error) {
+	return wslcli.GetHostIPFromHosts(distro, host)
+}
+
+func UpdateHostIP(distro string, host string, ip string) error {
+	return wslcli.UpdateHostIP(distro, host, ip)
+}
+
+func AddHostIP(distro string, host string, ip string) error {
+	return wslcli.AddHostIP(distro, host, ip)
+}
+
+func DeleteHost(distro string, host string) error {
+	return wslcli.DeleteHost(distro, host)
+}
+
+func AddOrUpdateHostIP(distro string, host string, ip string) error {
+	old_ip, err := GetHostIP(distro, host)
+	if err != nil {
+		return err
+	}
+	if old_ip == ip {
+		return nil
+	}
+	if len(old_ip) == 0 {
+		return AddHostIP(distro, host, ip)
+	} else if old_ip != ip {
+		return UpdateHostIP(distro, host, ip)
+	}
+	return nil
 }

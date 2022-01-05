@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"math/bits"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -41,6 +40,15 @@ func ListAll() (string, error) {
 		return "", fmt.Errorf("failed to decode output: %w", err)
 	}
 	return decoded, nil
+}
+
+func Shutdown() error {
+	cmd := exec.Command("wsl.exe", "--shutdown")
+	_, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("wsl --shutdown failed: %w", err)
+	}
+	return nil
 }
 
 func netmaskToBits(mask uint32) int {
@@ -183,21 +191,6 @@ func RunCommand(command string, args ...string) (string, error) {
 	return sout, nil
 }
 
-// GetHostIP returns the IP address of Hyper-V Switch on the host connected to WSL
-func GetHostIP() (string, error) {
-	cmd := exec.Command("netsh", "interface", "ip", "show", "address", "vEthernet (WSL)") //, "|", "findstr", "IP Address", "|", "%", "{", "$_", "-replace", "IP Address:", "", "}", "|", "%", "{", "$_", "-replace", " ", "", "}")
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	ipRegex := regexp.MustCompile("IP(.*):\040*(.*)\r\n")
-	ipString := ipRegex.FindStringSubmatch(string(out))
-	if len(ipString) != 3 {
-		return "", errors.New(`netsh interface ip show address "vEthernet (WSL)"`)
-	}
-	return ipString[2], nil
-}
-
 func decodeOutput(raw []byte) (string, error) {
 	win16le := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 	utf16bom := unicode.BOMOverride(win16le.NewDecoder())
@@ -207,4 +200,84 @@ func decodeOutput(raw []byte) (string, error) {
 		return "", err
 	}
 	return string(decoded), nil
+}
+
+func UpdateHostIP(distro string, host string, ip string) error {
+	old_ip, err := GetHostIPFromHosts(distro, host)
+	if err != nil {
+		return err
+	}
+
+	if len(old_ip) > 0 {
+		cmd := exec.Command("wsl.exe", "-d", distro, "--", "sed", "-i", fmt.Sprintf("s/%s %s$/%s %s/g", old_ip, host, ip, host), "/etc/hosts")
+		_, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return errors.New("no found host ip")
+	}
+}
+
+/// Use the sed "a\" command to append new line.
+func AddHostIP(distro string, host string, ip string) error {
+	cmd := exec.Command("wsl.exe", "-d", distro, "-u", "root", "--", "sed", "-i", fmt.Sprintf("$ a\\%s %s", ip, host), "/etc/hosts")
+	out, err := cmd.Output()
+	println(string(out))
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("%s", string(exitError.Stderr))
+		}
+		return err
+	}
+	return nil
+}
+
+/// Use the sed "d" command to delete line
+func DeleteHost(distro string, host string) error {
+	cmd := exec.Command("wsl.exe", "-d", distro, "--", "sed", "-i", fmt.Sprintf("/%s$/d", host), "/etc/hosts")
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/// Find target hostname from hosts file
+func GetHostIPFromHosts(distro string, host string) (string, error) {
+	cmd := exec.Command("wsl.exe", "-d", distro, "--", "cat", "/etc/hosts")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	sout := string(out)
+	sout = strings.TrimSpace(sout)
+	if sout == "" {
+		return "", errors.New("invalid output from /etc/hosts")
+	}
+	lines := strings.Split(sout, "\n")
+
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := lines[i]
+		if len(line) == 0 {
+			continue
+		}
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		item := strings.Split(line, " ")
+		if len(item) < 2 {
+			// Error format.
+			continue
+		}
+		for j := 1; j < len(item); j++ {
+			if item[j] == host {
+				return item[0], nil
+			}
+		}
+	}
+
+	return "", nil
+
 }

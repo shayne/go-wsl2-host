@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -188,4 +190,21 @@ func (h *HostsAPI) Write() error {
 	}
 
 	return nil
+}
+
+// GetHostIP returns the IP address of Hyper-V Switch on the host connected to WSL
+func GetHostIP() (string, error) {
+	cmd := exec.Command("netsh", "interface", "ip", "show", "address", "vEthernet (WSL)") //, "|", "findstr", "IP Address", "|", "%", "{", "$_", "-replace", "IP Address:", "", "}", "|", "%", "{", "$_", "-replace", " ", "", "}")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	// If system language not english, the output not "IP Address". such as in chinese it's "IP 地址".
+	// And the output no have other such as "IP", so we can only match the "IP".
+	ipRegex := regexp.MustCompile("IP .*:\040*(.*)\r\n")
+	ipString := ipRegex.FindStringSubmatch(string(out))
+	if len(ipString) != 2 {
+		return "", errors.New(`netsh interface ip show address "vEthernet (WSL)"`)
+	}
+	return ipString[1], nil
 }
