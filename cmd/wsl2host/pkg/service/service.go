@@ -1,11 +1,11 @@
 package service
 
 import (
-	"os"
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
 	"strings"
-	"os/exec"
 
 	"github.com/shayne/go-wsl2-host/internal/wsl2hosts"
 	"golang.org/x/sys/windows/svc/debug"
@@ -13,11 +13,10 @@ import (
 	"github.com/shayne/go-wsl2-host/pkg/hostsapi"
 
 	"github.com/shayne/go-wsl2-host/pkg/wslapi"
-
-	"github.com/shayne/go-wsl2-host/pkg/wslcli"
 )
 
 const tld = ".wsl"
+const windowshost = "windows.local"
 
 var hostnamereg, _ = regexp.Compile("[^A-Za-z0-9]+")
 
@@ -31,12 +30,35 @@ func distroNameToHostname(distroname string) string {
 
 // Run main entry point to service logic
 func Run(elog debug.Log) error {
+	// Then get all wsl info. and run them with config.
 	infos, err := wslapi.GetAllInfo()
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("failed to get infos: %v", err))
 		return fmt.Errorf("failed to get infos: %w", err)
 	}
 
+	err = updateHostIP(elog, infos)
+	if err != nil {
+		elog.Error(1, fmt.Sprintf("failed to update host IP info: %s", err))
+	}
+
+	for _, i := range infos {
+		if i.Running {
+			err = updateDistroIP(elog, infos, i.Name)
+			if err != nil {
+				elog.Error(1, fmt.Sprintf("failed to update distro[%s] IP info: %s", i.Name, err))
+			}
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateHostIP(elog debug.Log, distros []*wslapi.DistroInfo) error {
+	// update the ip to the wsl
 	hapi, err := hostsapi.CreateAPI("wsl2-host") // filtere only managed host entries
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("failed to create hosts api: %v", err))
@@ -46,10 +68,11 @@ func Run(elog debug.Log) error {
 	updated := false
 	hostentries := hapi.Entries()
 
-	for _, i := range infos {
+	// update the wsl ip to host
+	for _, i := range distros {
 		hostname := distroNameToHostname(i.Name)
 		// remove stopped distros
-		if i.Running == false {
+		if !i.Running {
 			err := hapi.RemoveEntry(hostname)
 			if err == nil {
 				updated = true
@@ -58,26 +81,16 @@ func Run(elog debug.Log) error {
 		}
 
 		// update IPs of running distros
-		var ip string
-		if i.Version == 1 {
-			ip = "127.0.0.1"
-		} else {
-			ip, err = wslapi.GetIP(i.Name)
-			if err != nil {
-				elog.Info(1, fmt.Sprintf("failed to get IP for distro %q: %v", i.Name, err))
-				continue
-			}
-		}
 		if he, exists := hostentries[hostname]; exists {
-			if he.IP != ip {
+			if he.IP != i.IP {
 				updated = true
-				he.IP = ip
+				he.IP = i.IP
 			}
 		} else {
 			// add running distros not present
 			err := hapi.AddEntry(&hostsapi.HostEntry{
 				Hostname: hostname,
-				IP:       ip,
+				IP:       i.IP,
 				Comment:  wsl2hosts.DefaultComment(),
 			})
 			if err == nil {
@@ -136,7 +149,7 @@ func Run(elog debug.Log) error {
 		}
 	}
 
-	hostIP, err := wslcli.GetHostIP()
+	hostIP, err := hostsapi.GetHostIP()
 
 	if err == nil {
 		hostname, err := os.Hostname()
@@ -164,5 +177,29 @@ func Run(elog debug.Log) error {
 		exec.Command("C:\\Windows\\System32\\cmd.exe", "/C net start iphlpsvc").Run()
 	}
 
+	return nil
+}
+
+/// Write all other distro and host into the hosts file for each distro.
+func updateDistroIP(elog debug.Log, distros []*wslapi.DistroInfo, distro string) error {
+	host_ip, err := hostsapi.GetHostIP()
+	if err != nil {
+		return err
+	}
+	err = wslapi.AddOrUpdateHostIP(distro, windowshost, host_ip)
+	if err != nil {
+		return err
+	}
+
+	for _, dist := range distros {
+		if !dist.Running || dist.Name == distro {
+			continue
+		}
+		hostAlias := distroNameToHostname(dist.Name)
+		err = wslapi.AddOrUpdateHostIP(distro, hostAlias, dist.IP)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
