@@ -22,7 +22,11 @@ Windows Username: <username-you-use-to-login-to-windows>
 Windows Password: <password-for-this-user>
 ```
 
-The program will install a service and start it up. Launch `wsl` then from a `cmd` prompt, run `ping ubuntu1804.wsl`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
+The program will install a service and start it up. 
+
+The user account informed must have the right to `logon on as a service`. To do so, run `secpol.msc` command and navigate to `Security Settings - Local policies - User rights assignment > Log on as a service`, and add your username.
+
+Launch `wsl` then from a `cmd` prompt, run `ping ubuntu1804.wsl`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
 
 The Windows hosts file is located at: `C:\Windows\System32\drivers\etc\hosts`
 
