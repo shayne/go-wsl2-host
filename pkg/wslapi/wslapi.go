@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"regexp"
 
 	"github.com/shayne/go-wsl2-host/pkg/wslcli"
 )
@@ -139,7 +140,7 @@ func GetHostAliases() ([]string, error) {
 	if out == "" {
 		return nil, fmt.Errorf("no host aliases")
 	}
-	return strings.Split(out, " "), nil
+	return regexp.MustCompile("\\s+").Split(out, -1), nil
 }
 
 func GetHostIP(distro string, host string) (string, error) {
