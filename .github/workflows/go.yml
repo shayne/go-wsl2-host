@@ -7,14 +7,11 @@ jobs:
     runs-on: [windows-latest]
     steps:
 
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
-
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
     - name: Build
       run: make build
@@ -31,6 +28,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: true
+        automatic_release_tag: "latest"
         title: "Development Build"
         files: |
           wsl2host.exe
