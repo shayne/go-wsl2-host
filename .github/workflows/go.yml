@@ -18,7 +18,7 @@ jobs:
 
     - name: Build
       run: make build
-
+      
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
@@ -26,3 +26,11 @@ jobs:
         name: wsl2host.exe
         # Directory containing files to upload
         path: wsl2host.exe
+
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: true
+        title: "Development Build"
+        files: |
+          wsl2host.exe
