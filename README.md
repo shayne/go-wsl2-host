@@ -1,5 +1,7 @@
 # go-wsl2-host
 
+[Latest Build <br/> ![Latest Build](https://github.com/shayne/go-wsl2-host/actions/workflows/go.yml/badge.svg?tag=latest)](https://github.com/shayne/go-wsl2-host/releases/tag/latest)
+
 > As of v0.2.0, I've dropped support for `windows.local`, if this was important let me know and I can add it back in.
 
 > Unable to enter your username? Having trouble starting the service? See [issue #10](https://github.com/shayne/go-wsl2-host/issues/10#issuecomment-562631992)
