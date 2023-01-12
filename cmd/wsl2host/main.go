@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/shayne/go-wsl2-host/cmd/wsl2host/internal"
+	"github.com/shayne/go-wsl2-host/cmd/wsl2host/pkg/service"
 	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows/svc/eventlog"
 )
 
 func usage(errmsg string) {
@@ -15,7 +17,8 @@ func usage(errmsg string) {
 		"%s\n\n"+
 			"usage: %s <command>\n"+
 			"       where <command> is one of\n"+
-			"       install, remove, debug, start, stop, pause or continue.\n",
+			"       install, remove, debug, start, stop, pause or continue.\n"+
+			"       run: One-time run and update.\n",
 		errmsg, os.Args[0])
 	os.Exit(2)
 }
@@ -53,6 +56,12 @@ func main() {
 		err = internal.ControlService(svcName, svc.Pause, svc.Paused)
 	case "continue":
 		err = internal.ControlService(svcName, svc.Continue, svc.Running)
+	case "run":
+		elog, err := eventlog.Open(svcName)
+		if err != nil {
+			return
+		}
+		err = service.Run(elog)
 	default:
 		usage(fmt.Sprintf("invalid command %s", cmd))
 	}

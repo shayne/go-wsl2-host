@@ -201,7 +201,10 @@ func GetHostIP() (string, error) {
 	}
 	// If system language not english, the output not "IP Address". such as in chinese it's "IP 地址".
 	// And the output no have other such as "IP", so we can only match the "IP".
-	ipRegex := regexp.MustCompile("IP.*:?\040*(.*)\r\n")
+	// If need change reglar, make sure the other language is work OK.
+	// In chinese language os, the output is:
+	// "\r\n\xbdӿ\xda \"vEthernet (WSL)\" \xb5\xc4\xc5\xe4\xd6\xc3\r\n    DHCP \xd2\xd1\xc6\xf4\xd3\xc3:                          \xb7\xf1\r\n    IP \xb5\xd8ַ:                           172.18.144.1\r\n    \xd7\xd3\xcd\xf8ǰ\u05fa:                        172.18.144.0/20 (\xd1\xda\xc2\xeb 255.255.240.0)\r\n    InterfaceMetric:                      15\r\n\r\n"
+	ipRegex := regexp.MustCompile("IP.*:? \040*(.*)\r\n")
 	ipString := ipRegex.FindStringSubmatch(string(out))
 	if len(ipString) != 2 {
 		return "", errors.New(`netsh interface ip show address "vEthernet (WSL)"`)
