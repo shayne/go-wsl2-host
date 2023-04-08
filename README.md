@@ -18,15 +18,15 @@ To install and run, download a binary from the releases tab. Place it somewhere 
 
 Open an **elevated/administrator** command prompt:
 
-```
+```powershell
 > .\wsl2host.exe install
-Windows Username: <username-you-use-to-login-to-windows>
-Windows Password: <password-for-this-user>
+Windows Username: NT AUTHORITY\LocalService
+Windows Password: <just press enter for empty password if you plan to install and run as LocalService>
 ```
 
-The program will install a service and start it up. 
+The program will install a service and start it up.
 
-The user account informed must have the right to `logon on as a service`. To do so, run `secpol.msc` command and navigate to `Security Settings - Local policies - User rights assignment > Log on as a service`, and add your username.
+If you don't use the default local service account `NT Authority\Local Service`, the user account informed must have the right to `logon on as a service`. To do so, run `secpol.msc` command and navigate to `Security Settings - Local policies - User rights assignment > Log on as a service`, and add your username.
 
 Launch `wsl` then from a `cmd` prompt, run `ping ubuntu1804.wsl`. You can check the Windows hosts file to see what was written. The service will automatically update the IP if the WSL2 VM is stopped and started again.
 
@@ -38,16 +38,16 @@ _NOTE: Upgrading Windows Insider will remove the service, but not cleanly. To re
 
 Open an **elevated/administrator** command prompt:
 
-```
+```powershell
 > .\wsl2host.exe remove
 ```
 
-**Specifying aliases**
+**Specifying aliases:**
 
 As of v0.3 you can now specify aliases that point to your WSL2 VM IP. Having `some.client.local`, may be useful in your development workflow.
 
 To do this, create the file `~/.wsl2hosts` in your default WSL2 distro. Host names are space separated:
-```
+
+```text
 some.client.local my-app.local wsl.local
 ```
-

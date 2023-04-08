@@ -1,8 +1,10 @@
+//go:build windows
 // +build windows
 
 package internal
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -58,7 +60,10 @@ func InstallService(name, desc string) error {
 	}
 	fmt.Printf("Windows Username: ")
 	var username string
-	fmt.Scanln(&username)
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		username = scanner.Text()
+	}
 	if !strings.Contains(username, "\\") && !strings.Contains(username, "@") {
 		username = fmt.Sprintf(".\\%s", strings.TrimSpace(username))
 	}
