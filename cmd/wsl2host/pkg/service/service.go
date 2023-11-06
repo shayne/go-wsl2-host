@@ -100,7 +100,7 @@ func updateHostIP(elog debug.Log, distros []*wslapi.DistroInfo) error {
 	}
 
 	// process aliases
-	defdistro, _ := wslapi.GetDefaultDistro()
+	defdistro, err := wslapi.GetDefaultDistro()
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("GetDefaultDistro failed: %v", err))
 		return fmt.Errorf("GetDefaultDistro failed: %w", err)
