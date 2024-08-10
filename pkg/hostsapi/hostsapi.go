@@ -21,6 +21,10 @@ type HostEntry struct {
 	Comment  string
 }
 
+func (e *HostEntry) String() string {
+	return fmt.Sprintf("id:%d, ip:%s, hostname:%s, comment:%s", e.idx, e.IP, e.Hostname, e.Comment)
+}
+
 // HostsAPI data structure
 type HostsAPI struct {
 	filter    string
@@ -154,6 +158,18 @@ func (h *HostsAPI) AddEntry(entry *HostEntry) error {
 	return nil
 }
 
+func (h *HostsAPI) IsUpsertEntry(entry *HostEntry) bool {
+	if oldEntry, exists := h.entries[entry.Hostname]; exists {
+		if oldEntry == entry {
+			fmt.Printf("entry is same, no need to update, entry:%s\n", entry)
+			return false
+		}
+	}
+	fmt.Printf("upsert entry:%s\n", entry)
+	h.entries[entry.Hostname] = entry
+	return true
+}
+
 // Write
 func (h *HostsAPI) Write() error {
 	var outbuf bytes.Buffer
@@ -211,3 +227,22 @@ func GetHostIP() (string, error) {
 	}
 	return ipString[1], nil
 }
+
+func GetHostIPV2() (string, error) {
+    cmd := exec.Command("powershell", "-Command", "(Get-NetIPAddress | Where-Object {$_.InterfaceAlias -like '*WSL*' -and $_.AddressFamily -eq 'IPv4'}).IPAddress")
+
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        return "", fmt.Errorf("failed to execute PowerShell command with output: %v", string(out))
+    }
+
+    // Trim any whitespace or newline characters from the output
+    ip := strings.TrimSpace(string(out))
+
+    if ip == "" {
+        return "", errors.New("no WSL IP address found")
+    }
+
+    return ip, nil
+}
+
